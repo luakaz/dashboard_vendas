@@ -281,9 +281,7 @@ def main():
     with col_right:
         plot_revenue_by_city(df_filtered)
         
-    with col_right:
-        plot_revenue_by_city(df_filtered)
-        
+
     st.markdown("---")
     
     # New Cumulative Chart
