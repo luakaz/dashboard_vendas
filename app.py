@@ -5,7 +5,7 @@ import os
 
 # --- Configuration ---
 st.set_page_config(
-    page_title="Dashboard de Vendas",
+    page_title="Dashboard de Faturamento",
     layout="wide"
 )
 
@@ -178,6 +178,34 @@ def plot_revenue_by_channel(df: pd.DataFrame):
     )
     st.plotly_chart(fig)
 
+def plot_cumulative_revenue_by_month(df: pd.DataFrame):
+    """
+    Plots a line chart of cumulative revenue by month.
+    """
+    if df.empty:
+        st.info("Sem dados para exibir o gráfico de faturamento acumulado.")
+        return
+
+    # Ensure we are working with a copy to avoid SettingWithCopyWarning on the original df if needed
+    df_chart = df.copy()
+    df_chart['mes_ano'] = df_chart['data_venda'].dt.to_period('M').astype(str)
+    
+    # Group by month and sum revenue
+    monthly_revenue = df_chart.groupby('mes_ano')['valor_total'].sum().reset_index()
+    
+    # Calculate cumulative sum
+    monthly_revenue['faturamento_acumulado'] = monthly_revenue['valor_total'].cumsum()
+    
+    fig = px.line(
+        monthly_revenue,
+        x='mes_ano',
+        y='faturamento_acumulado',
+        title="Faturamento Acumulado por Mês",
+        labels={'mes_ano': 'Mês', 'faturamento_acumulado': 'Faturamento Acumulado (R$)'},
+        markers=True
+    )
+    st.plotly_chart(fig)
+
 def build_top_products_table(df: pd.DataFrame) -> pd.DataFrame:
     """
     Builds a DataFrame for the top products by revenue.
@@ -202,7 +230,7 @@ def build_top_products_table(df: pd.DataFrame) -> pd.DataFrame:
 # --- Main Function ---
 
 def main():
-    st.title("Dashboard de Vendas")
+    st.title("Dashboard de Faturamento")
     
     # 1. Data Loading
     uploaded_file = st.sidebar.file_uploader("Carregar arquivo CSV", type=["csv"])
@@ -253,6 +281,14 @@ def main():
     with col_right:
         plot_revenue_by_city(df_filtered)
         
+    with col_right:
+        plot_revenue_by_city(df_filtered)
+        
+    st.markdown("---")
+    
+    # New Cumulative Chart
+    plot_cumulative_revenue_by_month(df_filtered)
+
     st.markdown("---")
     
     col_pie, col_table = st.columns([1, 2]) # Adjust ratio as needed
